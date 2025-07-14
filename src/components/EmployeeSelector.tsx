@@ -45,13 +45,19 @@ export const EmployeeSelector = ({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [isCustomValue, setIsCustomValue] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Check if current value is a custom value (not in employee list)
   useEffect(() => {
     const isInList = defaultEmployees.some(emp => emp.name.toLowerCase() === value.toLowerCase());
     setIsCustomValue(value !== "" && !isInList);
   }, [value]);
+
+  // Update search value when popover opens
+  useEffect(() => {
+    if (open) {
+      setSearchValue(value);
+    }
+  }, [open, value]);
 
   const handleSelect = (employeeName: string) => {
     onChange(employeeName);
@@ -60,12 +66,13 @@ export const EmployeeSelector = ({
     setIsCustomValue(false);
   };
 
-  const handleCustomInput = (inputValue: string) => {
-    onChange(inputValue);
+  const handleSearchChange = (inputValue: string) => {
     setSearchValue(inputValue);
-    setIsCustomValue(inputValue !== "" && !defaultEmployees.some(emp => 
+    onChange(inputValue);
+    const isInList = defaultEmployees.some(emp => 
       emp.name.toLowerCase() === inputValue.toLowerCase()
-    ));
+    );
+    setIsCustomValue(inputValue !== "" && !isInList);
   };
 
   const filteredEmployees = defaultEmployees.filter(employee =>
@@ -101,19 +108,13 @@ export const EmployeeSelector = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0" align="start">
-          <Command>
-            <div className="px-3 py-2 border-b">
-              <Input
-                ref={inputRef}
-                placeholder="Search employees or enter custom name..."
-                value={searchValue}
-                onChange={(e) => {
-                  setSearchValue(e.target.value);
-                  handleCustomInput(e.target.value);
-                }}
-                className="h-9 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0"
-              />
-            </div>
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder="Search employees or enter custom name..."
+              value={searchValue}
+              onValueChange={handleSearchChange}
+              className="h-9"
+            />
             <CommandList className="max-h-[200px]">
               {searchValue && !filteredEmployees.some(emp => 
                 emp.name.toLowerCase() === searchValue.toLowerCase()
@@ -144,6 +145,7 @@ export const EmployeeSelector = ({
                       key={employee.id}
                       onSelect={() => handleSelect(employee.name)}
                       className="cursor-pointer"
+                      value={employee.name}
                     >
                       <Check className={cn(
                         "mr-2 h-4 w-4",
@@ -160,7 +162,7 @@ export const EmployeeSelector = ({
               
               {filteredEmployees.length === 0 && searchValue && (
                 <CommandEmpty>
-                  No employees found. Press Enter to add "{searchValue}" as custom recipient.
+                  No employees found. The text "{searchValue}" will be used as custom recipient.
                 </CommandEmpty>
               )}
             </CommandList>
