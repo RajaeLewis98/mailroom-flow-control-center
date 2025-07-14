@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +9,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Filter, Mail, User, Building, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { EmployeeSelector } from "./EmployeeSelector";
 
 export const IncomingMail = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedRecipient, setSelectedRecipient] = useState("");
 
   const [incomingMail, setIncomingMail] = useState([
     {
@@ -87,7 +88,7 @@ export const IncomingMail = () => {
     const newMail = {
       id: `IN${String(incomingMail.length + 1).padStart(3, '0')}`,
       sender: formData.get('sender') as string,
-      recipient: formData.get('recipient') as string,
+      recipient: selectedRecipient,
       department: formData.get('department') as string,
       type: formData.get('type') as string,
       priority: formData.get('priority') as string,
@@ -99,6 +100,7 @@ export const IncomingMail = () => {
 
     setIncomingMail([newMail, ...incomingMail]);
     setIsDialogOpen(false);
+    setSelectedRecipient("");
     toast({
       title: "Mail Logged",
       description: `Incoming mail ${newMail.id} has been successfully logged.`,
@@ -157,7 +159,13 @@ export const IncomingMail = () => {
                 </div>
                 <div>
                   <Label htmlFor="recipient">Recipient</Label>
-                  <Input id="recipient" name="recipient" placeholder="Employee name" required />
+                  <EmployeeSelector
+                    value={selectedRecipient}
+                    onChange={setSelectedRecipient}
+                    placeholder="Select or enter employee name"
+                    name="recipient"
+                    required
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
