@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Package, Search, Plus, Filter, BarChart3, Users, Clock, CheckCircle } from "lucide-react";
+import { Mail, Package, Search, Plus, Filter, BarChart3, Users, Clock, CheckCircle, History } from "lucide-react";
 import { MailDashboard } from "@/components/MailDashboard";
 import { IncomingMail } from "@/components/IncomingMail";
 import { OutgoingMail } from "@/components/OutgoingMail";
 import { MailSearch } from "@/components/MailSearch";
+import { MailHistory } from "@/components/MailHistory";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -46,7 +47,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white/60 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-white/60 backdrop-blur-sm">
             <TabsTrigger value="dashboard" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
               <span>Dashboard</span>
@@ -62,6 +63,10 @@ const Index = () => {
             <TabsTrigger value="search" className="flex items-center space-x-2">
               <Search className="h-4 w-4" />
               <span>Search</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center space-x-2">
+              <History className="h-4 w-4" />
+              <span>History</span>
             </TabsTrigger>
           </TabsList>
 
@@ -79,6 +84,10 @@ const Index = () => {
 
           <TabsContent value="search">
             <MailSearch />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <MailHistory />
           </TabsContent>
         </Tabs>
       </main>
