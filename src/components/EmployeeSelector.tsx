@@ -60,6 +60,7 @@ export const EmployeeSelector = ({
   }, [open, value]);
 
   const handleSelect = (employeeName: string) => {
+    console.log("Selecting employee:", employeeName);
     onChange(employeeName);
     setOpen(false);
     setSearchValue("");
@@ -67,6 +68,7 @@ export const EmployeeSelector = ({
   };
 
   const handleSearchChange = (inputValue: string) => {
+    console.log("Search value changed:", inputValue);
     setSearchValue(inputValue);
     onChange(inputValue);
     const isInList = defaultEmployees.some(emp => 
