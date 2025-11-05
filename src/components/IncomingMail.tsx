@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Filter, Mail, User, Building, Clock, CheckCircle, AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { EmployeeSelector } from "./EmployeeSelector";
 
 export const IncomingMail = () => {
-  const { toast } = useToast();
+  const { addNotification } = useNotifications();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -101,8 +101,9 @@ export const IncomingMail = () => {
     setIncomingMail([newMail, ...incomingMail]);
     setIsDialogOpen(false);
     setSelectedRecipient("");
-    toast({
-      title: "✅ Mail Logged Successfully",
+    addNotification({
+      type: "mail",
+      title: "Mail Logged Successfully",
       description: `Incoming mail ${newMail.id} has been logged for ${newMail.recipient} (${newMail.department}).`,
     });
   };
@@ -111,8 +112,9 @@ export const IncomingMail = () => {
     setIncomingMail(incomingMail.map(mail => 
       mail.id === id ? { ...mail, status: newStatus } : mail
     ));
-    toast({
-      title: "📬 Status Updated",
+    addNotification({
+      type: "success",
+      title: "Status Updated",
       description: `Mail ${id} status updated to ${newStatus.replace('_', ' ')}.`,
     });
   };

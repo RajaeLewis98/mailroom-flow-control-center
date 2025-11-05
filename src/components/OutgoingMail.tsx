@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Filter, Package, User, Building, Truck, CheckCircle, Clock } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 export const OutgoingMail = () => {
-  const { toast } = useToast();
+  const { addNotification } = useNotifications();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -107,8 +107,9 @@ export const OutgoingMail = () => {
 
     setOutgoingMail([newMail, ...outgoingMail]);
     setIsDialogOpen(false);
-    toast({
-      title: "✅ Mail Logged Successfully",
+    addNotification({
+      type: "mail",
+      title: "Mail Logged Successfully",
       description: `Outgoing mail ${newMail.id} to ${newMail.recipient} has been logged.`,
     });
   };
@@ -127,8 +128,9 @@ export const OutgoingMail = () => {
       }
       return mail;
     }));
-    toast({
-      title: "📦 Status Updated",
+    addNotification({
+      type: "success",
+      title: "Status Updated",
       description: `Mail ${id} status updated to ${newStatus}.`,
     });
   };

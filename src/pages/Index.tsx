@@ -11,9 +11,12 @@ import { IncomingMail } from "@/components/IncomingMail";
 import { OutgoingMail } from "@/components/OutgoingMail";
 import { MailSearch } from "@/components/MailSearch";
 import { MailHistory } from "@/components/MailHistory";
+import { NotificationPanel } from "@/components/NotificationPanel";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { notifications, markAsRead, clearAll } = useNotifications();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -39,6 +42,11 @@ const Index = () => {
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Reports
               </Button>
+              <NotificationPanel 
+                notifications={notifications}
+                onMarkAsRead={markAsRead}
+                onClearAll={clearAll}
+              />
             </div>
           </div>
         </div>
