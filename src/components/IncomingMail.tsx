@@ -102,8 +102,8 @@ export const IncomingMail = () => {
     setIsDialogOpen(false);
     setSelectedRecipient("");
     toast({
-      title: "Mail Logged",
-      description: `Incoming mail ${newMail.id} has been successfully logged.`,
+      title: "✅ Mail Logged Successfully",
+      description: `Incoming mail ${newMail.id} has been logged for ${newMail.recipient} (${newMail.department}).`,
     });
   };
 
@@ -112,7 +112,7 @@ export const IncomingMail = () => {
       mail.id === id ? { ...mail, status: newStatus } : mail
     ));
     toast({
-      title: "Status Updated",
+      title: "📬 Status Updated",
       description: `Mail ${id} status updated to ${newStatus.replace('_', ' ')}.`,
     });
   };

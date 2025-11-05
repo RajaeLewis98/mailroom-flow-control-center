@@ -108,8 +108,8 @@ export const OutgoingMail = () => {
     setOutgoingMail([newMail, ...outgoingMail]);
     setIsDialogOpen(false);
     toast({
-      title: "Mail Logged",
-      description: `Outgoing mail ${newMail.id} has been successfully logged.`,
+      title: "✅ Mail Logged Successfully",
+      description: `Outgoing mail ${newMail.id} to ${newMail.recipient} has been logged.`,
     });
   };
 
@@ -128,7 +128,7 @@ export const OutgoingMail = () => {
       return mail;
     }));
     toast({
-      title: "Status Updated",
+      title: "📦 Status Updated",
       description: `Mail ${id} status updated to ${newStatus}.`,
     });
   };
