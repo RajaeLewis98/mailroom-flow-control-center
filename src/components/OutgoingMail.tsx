@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,16 +7,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Filter, Package, User, Building, Truck, CheckCircle, Clock } from "lucide-react";
+import { Plus, Search, Filter, Package, User, Building, Truck, CheckCircle, Clock, ChevronRight, ChevronDown } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+interface MailItem {
+  id: string;
+  sender: string;
+  recipient: string;
+  recipientAddress: string;
+  type: string;
+  priority: string;
+  status: string;
+  shippedDate: string;
+  shippedTime: string;
+  trackingNumber: string;
+  carrier: string;
+  notes: string;
+  parentId?: string;
+}
 
 export const OutgoingMail = () => {
   const { addNotification } = useNotifications();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [parentIdForSubItem, setParentIdForSubItem] = useState<string | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
-  const [outgoingMail, setOutgoingMail] = useState([
+  const [outgoingMail, setOutgoingMail] = useState<MailItem[]>([
     {
       id: "OUT001",
       sender: "Marketing Department",
@@ -90,7 +108,7 @@ export const OutgoingMail = () => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     
-    const newMail = {
+    const newMail: MailItem = {
       id: `OUT${String(outgoingMail.length + 1).padStart(3, '0')}`,
       sender: formData.get('sender') as string,
       recipient: formData.get('recipient') as string,
@@ -102,15 +120,19 @@ export const OutgoingMail = () => {
       shippedTime: "",
       trackingNumber: "",
       carrier: "",
-      notes: formData.get('notes') as string || ""
+      notes: formData.get('notes') as string || "",
+      parentId: parentIdForSubItem || undefined
     };
 
     setOutgoingMail([newMail, ...outgoingMail]);
     setIsDialogOpen(false);
+    setParentIdForSubItem(null);
     addNotification({
       type: "mail",
-      title: "Mail Logged Successfully",
-      description: `Outgoing mail ${newMail.id} to ${newMail.recipient} has been logged.`,
+      title: parentIdForSubItem ? "Sub-Item Created" : "Mail Logged Successfully",
+      description: parentIdForSubItem 
+        ? `Sub-item ${newMail.id} created under ${parentIdForSubItem}.`
+        : `Outgoing mail ${newMail.id} to ${newMail.recipient} has been logged.`,
     });
   };
 
@@ -135,6 +157,20 @@ export const OutgoingMail = () => {
     });
   };
 
+  const getChildItems = (parentId: string) => {
+    return outgoingMail.filter(mail => mail.parentId === parentId);
+  };
+
+  const toggleExpanded = (id: string) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedItems(newExpanded);
+  };
+
   const filteredMail = outgoingMail.filter(mail => {
     const matchesSearch = 
       mail.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -143,7 +179,7 @@ export const OutgoingMail = () => {
     
     const matchesStatus = statusFilter === "all" || mail.status === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && !mail.parentId; // Only show top-level items
   });
 
   return (
@@ -164,9 +200,9 @@ export const OutgoingMail = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Log New Outgoing Mail</DialogTitle>
+              <DialogTitle>{parentIdForSubItem ? `Create Sub-Item for ${parentIdForSubItem}` : "Log New Outgoing Mail"}</DialogTitle>
               <DialogDescription>
-                Record details of a new mail item to be sent.
+                {parentIdForSubItem ? "Add a related sub-item to the parent mail." : "Record details of a new mail item to be sent."}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddMail} className="space-y-4">
@@ -273,99 +309,221 @@ export const OutgoingMail = () => {
 
       {/* Mail List */}
       <div className="grid gap-4">
-        {filteredMail.map((mail) => (
-          <Card key={mail.id} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="pt-6">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-purple-100 p-2 rounded-lg">
-                      <Package className="h-4 w-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-800">{mail.id}</h3>
-                      {mail.shippedDate && (
-                        <p className="text-sm text-slate-600">Shipped: {mail.shippedDate} at {mail.shippedTime}</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-2">
-                      <div className="flex items-center">
-                        <Building className="h-3 w-3 mr-2 text-slate-400" />
-                        <span className="text-slate-600">From:</span>
-                        <span className="ml-2 font-medium">{mail.sender}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <User className="h-3 w-3 mr-2 text-slate-400" />
-                        <span className="text-slate-600">To:</span>
-                        <span className="ml-2 font-medium">{mail.recipient}</span>
-                      </div>
-                      {mail.trackingNumber && (
-                        <div className="flex items-center">
-                          <Truck className="h-3 w-3 mr-2 text-slate-400" />
-                          <span className="text-slate-600">Tracking:</span>
-                          <span className="ml-2 font-medium">{mail.trackingNumber}</span>
+        {filteredMail.map((mail) => {
+          const childItems = getChildItems(mail.id);
+          const hasChildren = childItems.length > 0;
+          const isExpanded = expandedItems.has(mail.id);
+
+          return (
+            <div key={mail.id}>
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        {hasChildren && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => toggleExpanded(mail.id)}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                        <div className="bg-purple-100 p-2 rounded-lg">
+                          <Package className="h-4 w-4 text-purple-600" />
                         </div>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <div>
-                        <span className="text-slate-600">Type:</span>
-                        <span className="ml-2 font-medium">{mail.type}</span>
-                      </div>
-                      {mail.carrier && (
                         <div>
-                          <span className="text-slate-600">Carrier:</span>
-                          <span className="ml-2 font-medium">{mail.carrier}</span>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-slate-800">{mail.id}</h3>
+                            {hasChildren && (
+                              <Badge variant="secondary" className="text-xs">
+                                {childItems.length} sub-item{childItems.length !== 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                          {mail.shippedDate && (
+                            <p className="text-sm text-slate-600">Shipped: {mail.shippedDate} at {mail.shippedTime}</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-2">
+                          <div className="flex items-center">
+                            <Building className="h-3 w-3 mr-2 text-slate-400" />
+                            <span className="text-slate-600">From:</span>
+                            <span className="ml-2 font-medium">{mail.sender}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <User className="h-3 w-3 mr-2 text-slate-400" />
+                            <span className="text-slate-600">To:</span>
+                            <span className="ml-2 font-medium">{mail.recipient}</span>
+                          </div>
+                          {mail.trackingNumber && (
+                            <div className="flex items-center">
+                              <Truck className="h-3 w-3 mr-2 text-slate-400" />
+                              <span className="text-slate-600">Tracking:</span>
+                              <span className="ml-2 font-medium">{mail.trackingNumber}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-slate-600">Type:</span>
+                            <span className="ml-2 font-medium">{mail.type}</span>
+                          </div>
+                          {mail.carrier && (
+                            <div>
+                              <span className="text-slate-600">Carrier:</span>
+                              <span className="ml-2 font-medium">{mail.carrier}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 p-2 bg-slate-50 rounded text-sm">
+                        <span className="text-slate-600">Address:</span> {mail.recipientAddress}
+                      </div>
+                      
+                      {mail.notes && (
+                        <div className="mt-2 p-2 bg-slate-50 rounded text-sm">
+                          <span className="text-slate-600">Notes:</span> {mail.notes}
                         </div>
                       )}
                     </div>
-                  </div>
-                  
-                  <div className="mt-3 p-2 bg-slate-50 rounded text-sm">
-                    <span className="text-slate-600">Address:</span> {mail.recipientAddress}
-                  </div>
-                  
-                  {mail.notes && (
-                    <div className="mt-2 p-2 bg-slate-50 rounded text-sm">
-                      <span className="text-slate-600">Notes:</span> {mail.notes}
+                    
+                    <div className="lg:text-right space-y-3">
+                      <div className="flex lg:flex-col items-center lg:items-end gap-2">
+                        {getStatusBadge(mail.status)}
+                        {getPriorityBadge(mail.priority)}
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setParentIdForSubItem(mail.id);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add Sub-Item
+                        </Button>
+                        {mail.status === "pending" && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateStatus(mail.id, "shipped", "TRK" + Math.random().toString().substr(2, 9), "FedEx")}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            Mark Shipped
+                          </Button>
+                        )}
+                        {mail.status === "shipped" && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateStatus(mail.id, "delivered")}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Mark Delivered
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-                
-                <div className="lg:text-right space-y-3">
-                  <div className="flex lg:flex-col items-center lg:items-end gap-2">
-                    {getStatusBadge(mail.status)}
-                    {getPriorityBadge(mail.priority)}
                   </div>
-                  
-                  <div className="flex gap-2">
-                    {mail.status === "pending" && (
-                      <Button
-                        size="sm"
-                        onClick={() => updateStatus(mail.id, "shipped", "TRK" + Math.random().toString().substr(2, 9), "FedEx")}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        Mark Shipped
-                      </Button>
-                    )}
-                    {mail.status === "shipped" && (
-                      <Button
-                        size="sm"
-                        onClick={() => updateStatus(mail.id, "delivered")}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Mark Delivered
-                      </Button>
-                    )}
-                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Child Items */}
+              {hasChildren && isExpanded && (
+                <div className="ml-12 mt-2 space-y-2">
+                  {childItems.map((childMail) => (
+                    <Card key={childMail.id} className="bg-purple-50/50 backdrop-blur-sm border border-purple-200">
+                      <CardContent className="pt-4">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="bg-purple-100 p-1.5 rounded">
+                                <Package className="h-3 w-3 text-purple-600" />
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-slate-800 text-sm">{childMail.id}</h4>
+                                {childMail.shippedDate && (
+                                  <p className="text-xs text-slate-600">Shipped: {childMail.shippedDate}</p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                              <div className="space-y-1">
+                                <div className="flex items-center">
+                                  <Building className="h-2.5 w-2.5 mr-1.5 text-slate-400" />
+                                  <span className="text-slate-600">From:</span>
+                                  <span className="ml-1.5 font-medium">{childMail.sender}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <User className="h-2.5 w-2.5 mr-1.5 text-slate-400" />
+                                  <span className="text-slate-600">To:</span>
+                                  <span className="ml-1.5 font-medium">{childMail.recipient}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <div>
+                                  <span className="text-slate-600">Type:</span>
+                                  <span className="ml-1.5 font-medium">{childMail.type}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {childMail.notes && (
+                              <div className="mt-2 p-1.5 bg-white/50 rounded text-xs">
+                                <span className="text-slate-600">Notes:</span> {childMail.notes}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="lg:text-right space-y-2">
+                            <div className="flex lg:flex-col items-center lg:items-end gap-1">
+                              {getStatusBadge(childMail.status)}
+                              {getPriorityBadge(childMail.priority)}
+                            </div>
+                            
+                            <div className="flex gap-1">
+                              {childMail.status === "pending" && (
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                                  onClick={() => updateStatus(childMail.id, "shipped", "TRK" + Math.random().toString().substr(2, 9), "FedEx")}
+                                >
+                                  Shipped
+                                </Button>
+                              )}
+                              {childMail.status === "shipped" && (
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                                  onClick={() => updateStatus(childMail.id, "delivered")}
+                                >
+                                  Delivered
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {filteredMail.length === 0 && (
